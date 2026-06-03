@@ -13,12 +13,12 @@ st.set_page_config(
 st.title("🎯 로그")
 st.subheader("활동 기록 및 분석")
 
+# 데이터 로드
 if os.path.exists(DATA_FILE):
     df = pd.read_csv(DATA_FILE)
 else:
     df = pd.DataFrame(columns=[
         "날짜",
-        "활동",
         "지역",
         "활동시간(시간)",
         "금액",
@@ -30,28 +30,29 @@ menu = st.sidebar.selectbox(
     ["기록 추가", "기록 조회", "월별 통계"]
 )
 
+# -----------------------------
+# 기록 추가
+# -----------------------------
 if menu == "기록 추가":
 
     st.header("📝 기록 추가")
 
     hobby_date = st.date_input("날짜")
 
-    activity = st.text_input(
-        "활동",
-        placeholder="예: 골프, 등산, 낚시"
+    region = st.text_input(
+        "지역/장소",
+        placeholder="예: 수원"
     )
-
-    region = st.text_input("지역/장소", placeholder="예: 수원")
 
     duration = st.number_input(
         "총 소요 시간 (시간)",
-        min_value=1.0,
+        min_value=0.5,
         step=0.5
     )
 
     amount = st.number_input(
         "사용 금액(원)",
-        min_value=10000,
+        min_value=0,
         step=1000
     )
 
@@ -59,14 +60,11 @@ if menu == "기록 추가":
 
     if st.button("저장"):
 
-        if not activity.strip():
-            st.error("활동을 입력해주세요.")
-        elif not region.strip():
+        if not region.strip():
             st.error("지역/장소를 입력해주세요.")
         else:
             new_row = {
                 "날짜": hobby_date,
-                "활동": activity,
                 "지역": region,
                 "활동시간(시간)": duration,
                 "금액": amount,
@@ -82,6 +80,9 @@ if menu == "기록 추가":
 
             st.success("기록이 저장되었습니다.")
 
+# -----------------------------
+# 기록 조회
+# -----------------------------
 elif menu == "기록 조회":
 
     st.header("📋 기록 조회")
@@ -91,6 +92,9 @@ elif menu == "기록 조회":
     else:
         st.dataframe(df, use_container_width=True)
 
+# -----------------------------
+# 월별 통계
+# -----------------------------
 elif menu == "월별 통계":
 
     st.header("📊 월별 통계")
@@ -119,18 +123,12 @@ elif menu == "월별 통계":
         col2.metric("총 지출", f"{int(total_amount):,}원")
         col3.metric("총 활동시간", f"{total_hours:.1f}시간")
 
-        st.subheader("활동별 통계")
+        st.subheader("월별 기록")
 
-        activity_stats = (
-            month_df.groupby("활동")
-            .agg({
-                "금액": "sum",
-                "활동시간(시간)": "sum"
-            })
-            .reset_index()
+        st.dataframe(
+            month_df[["날짜", "지역", "활동시간(시간)", "금액", "메모"]],
+            use_container_width=True
         )
-
-        st.dataframe(activity_stats, use_container_width=True)
 
         st.subheader("지역별 방문 횟수")
 
