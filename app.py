@@ -6,13 +6,13 @@ import os
 DATA_FILE = "hobby_records.csv"
 
 st.set_page_config(
-    page_title="하비로그",
+    page_title="Zion CAL",
     page_icon="🎯",
     layout="wide"
 )
 
-st.title("🎯 하비로그")
-st.subheader("취미 활동 기록 및 분석")
+st.title("🎯")
+st.subheader("활동 기록 및 분석")
 
 # 데이터 로드
 if os.path.exists(DATA_FILE):
