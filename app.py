@@ -36,20 +36,19 @@ def load_data():
         if col not in data.columns:
             data[col] = ""
 
-    data = data[COLUMNS]
+    data = data[COLUMNS].copy()
 
-    data["날짜"] = pd.to_datetime(data["날짜"], errors="coerce").dt.strftime("%Y-%m-%d")
-    data["날짜"] = data["날짜"].fillna("")
+    # st.data_editor와 충돌하지 않도록 날짜는 문자열로 관리합니다.
+    data["날짜"] = data["날짜"].astype(str).replace("nan", "")
+    data["종류"] = data["종류"].astype(str).replace("nan", "")
+    data["지역"] = data["지역"].astype(str).replace("nan", "")
+    data["메모"] = data["메모"].astype(str).replace("nan", "")
 
     data["금액"] = pd.to_numeric(data["금액"], errors="coerce").fillna(0).astype(int)
     data["활동시간(시간)"] = pd.to_numeric(
         data["활동시간(시간)"],
         errors="coerce"
-    ).fillna(0)
-
-    data["종류"] = data["종류"].fillna("")
-    data["지역"] = data["지역"].fillna("")
-    data["메모"] = data["메모"].fillna("")
+    ).fillna(0.0).astype(float)
 
     return data
 
@@ -62,16 +61,18 @@ def save_data(data):
         if col not in data.columns:
             data[col] = ""
 
-    data = data[COLUMNS]
+    data = data[COLUMNS].copy()
 
-    data["날짜"] = pd.to_datetime(data["날짜"], errors="coerce").dt.strftime("%Y-%m-%d")
-    data["날짜"] = data["날짜"].fillna("")
+    data["날짜"] = data["날짜"].astype(str).replace("nan", "")
+    data["종류"] = data["종류"].astype(str).replace("nan", "")
+    data["지역"] = data["지역"].astype(str).replace("nan", "")
+    data["메모"] = data["메모"].astype(str).replace("nan", "")
 
     data["금액"] = pd.to_numeric(data["금액"], errors="coerce").fillna(0).astype(int)
     data["활동시간(시간)"] = pd.to_numeric(
         data["활동시간(시간)"],
         errors="coerce"
-    ).fillna(0)
+    ).fillna(0.0).astype(float)
 
     data.to_csv(DATA_FILE, index=False, encoding="utf-8-sig")
 
@@ -134,6 +135,7 @@ if menu == "기록 추가":
             save_data(df)
 
             st.success("기록이 저장되었습니다.")
+            st.rerun()
 
 # -----------------------------
 # 기록 조회: 수정 / 삭제 가능
@@ -145,7 +147,7 @@ elif menu == "기록 조회":
     if df.empty:
         st.info("등록된 기록이 없습니다.")
     else:
-        st.info("표에서 내용을 직접 수정할 수 있습니다. 행을 삭제하려면 왼쪽 체크박스로 행을 선택한 뒤 Delete 키 또는 휴지통 메뉴를 사용하세요.")
+        st.info("표에서 직접 수정하거나 행을 추가할 수 있습니다. 행 삭제는 표의 왼쪽 행 메뉴에서 가능합니다. 수정 후 반드시 '변경사항 저장'을 눌러주세요.")
 
         edited_df = st.data_editor(
             df,
@@ -153,9 +155,9 @@ elif menu == "기록 조회":
             num_rows="dynamic",
             hide_index=True,
             column_config={
-                "날짜": st.column_config.DateColumn(
+                "날짜": st.column_config.TextColumn(
                     "날짜",
-                    format="YYYY-MM-DD"
+                    help="YYYY-MM-DD 형식으로 입력하세요. 예: 2026-06-03"
                 ),
                 "종류": st.column_config.SelectboxColumn(
                     "종류",
@@ -168,14 +170,13 @@ elif menu == "기록 조회":
                 ),
                 "활동시간(시간)": st.column_config.NumberColumn(
                     "활동시간(시간)",
-                    min_value=0.5,
+                    min_value=0.0,
                     step=0.5
                 ),
                 "금액": st.column_config.NumberColumn(
                     "금액",
                     min_value=0,
-                    step=1000,
-                    format="%d원"
+                    step=1000
                 ),
                 "메모": st.column_config.TextColumn("메모")
             }
@@ -185,8 +186,12 @@ elif menu == "기록 조회":
 
         with col1:
             if st.button("변경사항 저장"):
+                edited_df = edited_df.copy()
+
                 if edited_df["지역"].astype(str).str.strip().eq("").any():
                     st.error("지역/장소가 비어 있는 기록이 있습니다.")
+                elif edited_df["종류"].astype(str).str.strip().eq("").any():
+                    st.error("종류가 비어 있는 기록이 있습니다.")
                 else:
                     save_data(edited_df)
                     st.success("변경사항이 저장되었습니다.")
@@ -214,7 +219,7 @@ elif menu == "월별 통계":
         stats_df = stats_df.dropna(subset=["날짜"])
 
         if stats_df.empty:
-            st.info("날짜 형식이 올바른 데이터가 없습니다.")
+            st.info("날짜 형식이 올바른 데이터가 없습니다. 날짜는 YYYY-MM-DD 형식으로 입력해주세요.")
         else:
             stats_df["월"] = stats_df["날짜"].dt.strftime("%Y-%m")
 
