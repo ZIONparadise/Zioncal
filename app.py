@@ -75,13 +75,13 @@ if menu == "기록 추가":
 
     duration = st.number_input(
         "총 소요 시간 (시간)",
-        min_value=0.5,
+        min_value=1.0,
         step=0.5
     )
 
     amount = st.number_input(
         "사용 금액(원)",
-        min_value=0,
+        min_value=10000,
         step=1000
     )
 
