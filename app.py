@@ -40,13 +40,11 @@ menu = st.sidebar.selectbox(
 # -----------------------------
 if menu == "기록 추가":
 
-    st.header("📝 취미 기록 추가")
+    st.header("📝 기록 추가")
 
     hobby_date = st.date_input("날짜")
 
-    hobby = st.text_input("취미 종류", placeholder="예: 골프")
-
-    region = st.text_input("지역/장소", placeholder="예: 이천 Silk Valley")
+    region = st.text_input("지역/장소", placeholder="수원")
 
     start_time = st.time_input("시작 시간")
 
