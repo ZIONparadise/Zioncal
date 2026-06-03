@@ -5,20 +5,20 @@ import os
 DATA_FILE = "hobby_records.csv"
 
 st.set_page_config(
-    page_title="하비로그",
+    page_title="로그",
     page_icon="🎯",
     layout="wide"
 )
 
-st.title("🎯 하비로그")
-st.subheader("취미 활동 기록 및 분석")
+st.title("🎯로그")
+st.subheader("활동 기록 및 분석")
 
 if os.path.exists(DATA_FILE):
     df = pd.read_csv(DATA_FILE)
 else:
     df = pd.DataFrame(columns=[
         "날짜",
-        "취미",
+        "활동",
         "지역",
         "활동시간(시간)",
         "금액",
@@ -32,21 +32,20 @@ menu = st.sidebar.selectbox(
 
 if menu == "기록 추가":
 
-    st.header("📝 취미 기록 추가")
+    st.header("📝 기록 추가")
 
     hobby_date = st.date_input("날짜")
-    hobby = st.text_input("취미 종류", placeholder="예: 골프")
-    region = st.text_input("지역/장소", placeholder="예: 이천 Silk Valley")
+    region = st.text_input("지역/장소", placeholder="예: 수원")
 
     duration = st.number_input(
         "총 소요 시간 (시간)",
-        min_value=0.0,
+        min_value=1.0,
         step=0.5
     )
 
     amount = st.number_input(
         "사용 금액(원)",
-        min_value=0,
+        min_value=10000,
         step=1000
     )
 
