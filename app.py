@@ -53,12 +53,9 @@ if menu == "기록 추가":
 
     if st.button("저장"):
 
-        if not hobby.strip():
-            st.error("취미 종류를 입력해주세요.")
         else:
             new_row = {
                 "날짜": hobby_date,
-                "취미": hobby,
                 "지역": region,
                 "활동시간(시간)": duration,
                 "금액": amount,
