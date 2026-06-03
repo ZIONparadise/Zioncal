@@ -38,13 +38,42 @@ def load_data():
 
     data = data[COLUMNS]
 
-    data["금액"] = pd.to_numeric(data["금액"], errors="coerce").fillna(0)
+    data["날짜"] = pd.to_datetime(data["날짜"], errors="coerce").dt.strftime("%Y-%m-%d")
+    data["날짜"] = data["날짜"].fillna("")
+
+    data["금액"] = pd.to_numeric(data["금액"], errors="coerce").fillna(0).astype(int)
     data["활동시간(시간)"] = pd.to_numeric(
         data["활동시간(시간)"],
         errors="coerce"
     ).fillna(0)
 
+    data["종류"] = data["종류"].fillna("")
+    data["지역"] = data["지역"].fillna("")
+    data["메모"] = data["메모"].fillna("")
+
     return data
+
+
+def save_data(data):
+    """데이터를 CSV 파일로 저장합니다."""
+    data = data.copy()
+
+    for col in COLUMNS:
+        if col not in data.columns:
+            data[col] = ""
+
+    data = data[COLUMNS]
+
+    data["날짜"] = pd.to_datetime(data["날짜"], errors="coerce").dt.strftime("%Y-%m-%d")
+    data["날짜"] = data["날짜"].fillna("")
+
+    data["금액"] = pd.to_numeric(data["금액"], errors="coerce").fillna(0).astype(int)
+    data["활동시간(시간)"] = pd.to_numeric(
+        data["활동시간(시간)"],
+        errors="coerce"
+    ).fillna(0)
+
+    data.to_csv(DATA_FILE, index=False, encoding="utf-8-sig")
 
 
 df = load_data()
@@ -102,28 +131,73 @@ if menu == "기록 추가":
             }])
 
             df = pd.concat([df, new_row], ignore_index=True)
-            df = df[COLUMNS]
-            df.to_csv(DATA_FILE, index=False, encoding="utf-8-sig")
+            save_data(df)
 
             st.success("기록이 저장되었습니다.")
 
 # -----------------------------
-# 기록 조회
+# 기록 조회: 수정 / 삭제 가능
 # -----------------------------
 elif menu == "기록 조회":
 
-    st.header("📋 기록 조회")
+    st.header("📋 기록 조회 / 수정 / 삭제")
 
     if df.empty:
         st.info("등록된 기록이 없습니다.")
     else:
-        view_df = df.copy()
-        view_df["금액"] = view_df["금액"].astype(int)
+        st.info("표에서 내용을 직접 수정할 수 있습니다. 행을 삭제하려면 왼쪽 체크박스로 행을 선택한 뒤 Delete 키 또는 휴지통 메뉴를 사용하세요.")
 
-        st.dataframe(
-            view_df[["날짜", "종류", "지역", "활동시간(시간)", "금액", "메모"]],
-            use_container_width=True
+        edited_df = st.data_editor(
+            df,
+            use_container_width=True,
+            num_rows="dynamic",
+            hide_index=True,
+            column_config={
+                "날짜": st.column_config.DateColumn(
+                    "날짜",
+                    format="YYYY-MM-DD"
+                ),
+                "종류": st.column_config.SelectboxColumn(
+                    "종류",
+                    options=CATEGORY_OPTIONS,
+                    required=True
+                ),
+                "지역": st.column_config.TextColumn(
+                    "지역",
+                    required=True
+                ),
+                "활동시간(시간)": st.column_config.NumberColumn(
+                    "활동시간(시간)",
+                    min_value=0.5,
+                    step=0.5
+                ),
+                "금액": st.column_config.NumberColumn(
+                    "금액",
+                    min_value=0,
+                    step=1000,
+                    format="%d원"
+                ),
+                "메모": st.column_config.TextColumn("메모")
+            }
         )
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if st.button("변경사항 저장"):
+                if edited_df["지역"].astype(str).str.strip().eq("").any():
+                    st.error("지역/장소가 비어 있는 기록이 있습니다.")
+                else:
+                    save_data(edited_df)
+                    st.success("변경사항이 저장되었습니다.")
+                    st.rerun()
+
+        with col2:
+            if st.button("전체 기록 삭제"):
+                empty_df = pd.DataFrame(columns=COLUMNS)
+                save_data(empty_df)
+                st.success("전체 기록이 삭제되었습니다.")
+                st.rerun()
 
 # -----------------------------
 # 월별 통계
